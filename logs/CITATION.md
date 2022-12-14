@@ -1,8 +1,8 @@
 
 Results included in this manuscript come from preprocessing
-performed using *fMRIPrep* 21.0.2
+performed using *fMRIPrep* 22.0.2
 (@fmriprep1; @fmriprep2; RRID:SCR_016216),
-which is based on *Nipype* 1.6.1
+which is based on *Nipype* 1.8.5
 (@nipype1; @nipype2; RRID:SCR_002502).
 
 
@@ -18,7 +18,7 @@ Brain tissue segmentation of cerebrospinal fluid (CSF),
 white-matter (WM) and gray-matter (GM) was performed on
 the brain-extracted T1w using `fast` [FSL 6.0.5.1:57b01774, RRID:SCR_002823,
 @fsl_fast].
-Brain surfaces were reconstructed using `recon-all` [FreeSurfer 6.0.1,
+Brain surfaces were reconstructed using `recon-all` [FreeSurfer 7.2.0,
 RRID:SCR_001847, @fs_reconall], and the brain mask estimated
 previously was refined with a custom variation of the method to reconcile
 ANTs-derived and FreeSurfer-derived segmentations of the cortical
@@ -28,22 +28,6 @@ nonlinear registration with `antsRegistration` (ANTs 2.3.3),
 using brain-extracted versions of both T1w reference and the T1w template.
 The following templates were selected for spatial normalization:
 *ICBM 152 Nonlinear Asymmetrical template version 2009c* [@mni152nlin2009casym, RRID:SCR_008796; TemplateFlow ID: MNI152NLin2009cAsym], *FSL's MNI ICBM 152 non-linear 6th Generation Asymmetric Average Brain Stereotaxic Registration Model* [@mni152nlin6asym, RRID:SCR_002823; TemplateFlow ID: MNI152NLin6Asym].
-
-
-Preprocessing of B<sub>0</sub> inhomogeneity mappings
-
-: A total of 1 fieldmaps were found available within the input
-BIDS structure for this particular subject.
-A deformation field to correct for susceptibility distortions was estimated
-based on *fMRIPrep*'s *fieldmap-less* approach.
-The deformation field is that resulting from co-registering the EPI reference
-to the same-subject T1w-reference with its intensity inverted [@fieldmapless1;
-@fieldmapless2].
-Registration is performed with `antsRegistration`
-(ANTs 2.3.3), and
-the process regularized by constraining deformation to be nonzero only
-along the phase-encoding direction, and modulated with an average fieldmap
-template [@fieldmapless3].
 
 Functional data preprocessing
 
@@ -56,9 +40,11 @@ Head-motion parameters with respect to the BOLD reference
 (transformation matrices, and six corresponding rotation and translation
 parameters) are estimated before any spatiotemporal filtering using
 `mcflirt` [FSL 6.0.5.1:57b01774, @mcflirt].
-The estimated *fieldmap* was then aligned with rigid-registration to the target
-EPI (echo-planar imaging) reference run.
-The field coefficients were mapped on to the reference EPI using the transform.
+The BOLD time-series (including slice-timing correction when applied)
+were resampled onto their original, native space by applying
+the transforms to correct for head-motion.
+These resampled BOLD time-series will be referred to as *preprocessed
+BOLD in original space*, or just *preprocessed BOLD*.
 The BOLD reference was then co-registered to the T1w reference using
 `bbregister` (FreeSurfer) which implements boundary-based registration [@bbr].
 Co-registration was configured with six degrees of freedom.
@@ -83,8 +69,8 @@ voxels within the brain mask.
 For aCompCor, three probabilistic masks (CSF, WM and combined CSF+WM)
 are generated in anatomical space.
 The implementation differs from that of Behzadi et al. in that instead
-of eroding the masks by 2 pixels on BOLD space, the aCompCor masks are
-subtracted a mask of pixels that likely contain a volume fraction of GM.
+of eroding the masks by 2 pixels on BOLD space, a mask of pixels that
+likely contain a volume fraction of GM is subtracted from the aCompCor masks.
 This mask is obtained by dilating a GM mask extracted from the FreeSurfer's *aseg* segmentation, and it ensures components are not extracted
 from voxels containing a minimal fraction of GM.
 Finally, these masks are resampled into BOLD space and binarized by
@@ -101,7 +87,10 @@ The confound time series derived from head motion estimates and global
 signals were expanded with the inclusion of temporal derivatives and
 quadratic terms for each [@confounds_satterthwaite_2013].
 Frames that exceeded a threshold of 0.5 mm FD or
-1.5 standardised DVARS were annotated as motion outliers.
+1.5 standardized DVARS were annotated as motion outliers.
+Additional nuisance timeseries are calculated by means of principal components
+analysis of the signal found within a thin band (*crown*) of voxels around
+the edge of the brain, as proposed by [@patriat_improved_2017].
 The BOLD time-series were resampled into standard space,
 generating a *preprocessed BOLD run in MNI152NLin2009cAsym space*.
 First, a reference volume and its skull-stripped version were generated
@@ -133,7 +122,7 @@ Non-gridded (surface) resamplings were performed using `mri_vol2surf`
 
 
 Many internal operations of *fMRIPrep* use
-*Nilearn* 0.8.1 [@nilearn, RRID:SCR_001362],
+*Nilearn* 0.9.1 [@nilearn, RRID:SCR_001362],
 mostly within the functional processing workflow.
 For more details of the pipeline, see [the section corresponding
 to workflows in *fMRIPrep*'s documentation](https://fmriprep.readthedocs.io/en/latest/workflows.html "FMRIPrep's documentation").
