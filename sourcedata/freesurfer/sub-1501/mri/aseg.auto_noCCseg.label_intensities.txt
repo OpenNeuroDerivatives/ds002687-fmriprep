@@ -1,1 +1,1 @@
-/annex/objects/MD5E-s1545--f591c26d14308a9360af481a2a844f10.txt
+../../../../.git/annex/objects/Mq/Gg/MD5E-s1545--f591c26d14308a9360af481a2a844f10.txt/MD5E-s1545--f591c26d14308a9360af481a2a844f10.txt
